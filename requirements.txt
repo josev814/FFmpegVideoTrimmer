@@ -1,0 +1,4 @@
+pycrypto
+py7zr
+requests
+Django
