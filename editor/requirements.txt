@@ -1,0 +1,3 @@
+django
+py7zr
+pycrypto

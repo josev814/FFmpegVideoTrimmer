@@ -1,0 +1,351 @@
+{% load static %}
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Personal Video Editor Online</title>
+<meta name="description" content="This online video editor allows you to cut/crop the video, audio and encode it in different formats. This app create a ffmpeg command line for encoding, or encode directly in the browser using the web ffmpeg. Load a video/audio, adjust the start/end time, and click & drag on the screen to crop into a rectangle.">
+<meta name="keywords" content="video editor, online video editor, video converter, video to audio, crop video, video cutter, audio cutter, mp4 editor, mp4 to gif, mp4 to m4a, mp4 to aac, online audio editor, merge video and audio, online ffmpeg, web ffmpeg">
+
+<meta property="og:title" content="Personal Video Editor Online"> 
+<meta property="og:description" content="This online video editor allows you to cut/crop the video, audio and encode it in different formats. This app create a ffmpeg command line for encoding, or encode directly in the browser using the web ffmpeg. Load a video/audio, adjust the start/end time, and click & drag on the screen to crop into a rectangle.">
+<meta property="og:type" content="website">
+<style>
+*{
+	font-size:14px;
+    font-family: Arial, Helvetica, sans-serif; /*Trebuchet MS, Tahoma, Verdana*/
+}
+body{
+	/*background: #e3e3e3;*/
+}
+/*#maintable{
+	background-color: white;
+}*/
+.divopt{
+	/*-webkit-box-shadow: 0 0 10px #999;
+	-moz-box-shadow: 0 0 10px #999;
+	box-shadow: 0 0 10px #999;
+	border: 1px solid transparent;*/	
+}
+A:link    {color:#0860A8;text-decoration:none;}
+A:visited {color:#0860A8;text-decoration:none;}
+A:active  {color:#0860A8;text-decoration:underline;}
+A:hover  {color:#0860A8;text-decoration:underline;}
+
+.head1{
+	font-size:19px;
+	font-weight:bold;
+}
+.head2{
+	font-size:16px;
+	font-weight:bold;
+	color:green;
+}
+.headdesc{
+	/*font-weight:bold;*/
+	color:green;
+}
+.nav{
+	font-size:18px;
+	margin-right:3px;
+}
+.uploaded{color:green;}
+.error{color:#8A0808;}
+.welcome{color:#45616D;}
+#video1, #canvas1{
+    width: 100%;
+    max-height: calc(100% - 4px);
+    position: absolute;
+    top:0;
+    left:0;
+}
+#resizable {
+    position: relative;
+    width: 720px;
+    height: 480px;
+    border: 1px solid black;
+    /*resize:both;*/
+    overflow:auto; 
+    padding:0px !important;
+}
+.slider_wrapper{
+    position: relative;
+    margin-bottom: 10px;
+	width:auto;
+}
+#slider_time_pos{
+    position: absolute;
+    width: 6px;
+    background: #E85A6C;
+    height: 100%;
+    top: 0;
+    left: 20%;
+    z-index: 12;
+    cursor: pointer;
+}
+/*#slider .noUi-connect {
+	background: green;
+}*/
+</style>
+<link rel="stylesheet" href="{% static 'editor/js/nouislider.min.css' %}" type="text/css">
+<script src="{% static '/editor/js/nouislider.min.js' %}" type="text/javascript"></script>
+<script src="{% static '/editor/js/common.js' %}" type="text/javascript"></script>
+<script src="{% static '/editor/js/jszip3.1.5.min.js' %}" type="text/javascript"></script>
+<script>
+var gadb=false;
+window.URL=window.URL || window.webkitURL;
+</script>
+</head>
+<body>
+<div align=center>
+	<a href="./" title="Go Home" class="toptitle" style="color:#aa2222">
+		<span style="font-size:30px;font-family:Verdana, Arial">Personal Video Editor Online</span>
+	</a>
+</div>
+
+<div id="maintable" width=1280 align=center class="divopt" style="padding:6px 8px;border:1px solid black;">
+	<p style="font-size:15px;width:850px;color:green;margin-top:2px;margin-bottom:3px">
+		This online video editor allows you to cut/crop the video, audio and encode it in different formats.<br>
+		This app create a ffmpeg command line for encoding, or encode directly in the browser using the web ffmpeg.
+		Load a video/audio, adjust the start/end time, and click & drag on the screen to crop into a rectangle.<br>
+		You can convert a video, audio to different format such as mp4, avi, mov, wmv, flv, m4a, aac, ogg, wma, gif animation.
+		This app only works locally without going through the server. You don't need to upload a video to any server.<br>
+		Select a file or Drop a media file on this page.
+	</p>
+	<br />
+	<div style="margin-top:2px;margin-bottom:1px">
+		<div id="dfile1" style="display:inline">
+			<input type="file" id="fileload1" name="files[]" style="width:230px">
+		</div>
+		<div>
+			<label>Enter the path that the file exists in (example: C:\Users\Windber Assembly\Videos\):
+				<input type="text" name="video_path" onchange="proc_ffmpeg()" />
+			</label>
+		</div>
+	</div>
+	<div id="downlink" style="height:18px;margin-bottom:3px"></div>
+
+	<div id="player">
+<table><tr>
+<td>Width<td><input type="range" id="size_width" min=100 max=1000 step="1" value="600" style="width:180px;padding:0px" onchange="size_width_onchange(this)">
+<td><input type=number id="size_width_n" style="width:65px" min=100 max=1000 value="600" onchange="size_width_n_onchange()">
+<td>
+<td><label><input type=checkbox id="chk_orgsize" onclick='chk_orgsize_onclick()'> Original Video Size</label>
+<td><td><div id='vphistory'></div>
+</table>
+
+<div id="resizable" style="margin-top:6px">
+	<video id="video1" loop muted></video>
+	<canvas id="canvas1"></canvas>
+</div>
+
+<table><tr>
+<td><div id="current_time" style="width:100px"></div>
+<td><div id="msg1" style="width:580px;white-space:nowrap;overflow:hidden;border:0px solid red;"></div>
+</table>
+
+<div id="controlbar">
+	<div class="slider_wrapper">
+		<div id="slider"></div>
+		<div id="slider_time_pos"></div>
+	</div>
+</div>
+
+<table style="white-space:nowrap"><tr>
+<td>Time <a href="#" onclick="proc_shortcut();return false" title="You can use the shortcut key after giving focus to the time input box.">shortcut</a>
+<input type="number" id="current_time2" style="width:110px" min=0 step="any" value="0">
+ <td>
+<td>Start (second) <input type="number" id="start" onchange="start_onchange()" style="width:100px" min=0 step="any">
+<td>End <input type="number" id="end" onchange="start_onchange()" style="width:100px" min=0 step="any">
+<td><td><button id='btn_toggle' onClick="proc_toggle()" style="font-size:15px;width:80px" disabled=true>Play</button>
+<td><label><input type="checkbox" id="chk_mute" onclick="chk_mute_onclick()" checked=true>Mute</label>
+</table>
+</div>
+
+
+<div style="align:center; width:75%">
+	ffmpeg Command for PC (copy the command below and encode it on your PC)
+	<br />
+	<input type=text id="ffmpeg" style="width:100%;font-size:15px;" spellcheck=false aria-readonly />
+	<br /><br />
+	<input type=text id="ffmpeg2" style="width:100%;font-size:15px;" spellcheck=false aria-readonly />
+	<br /><br />
+	<button id="btn_cstart" onclick="trigger_convert()">Encode by Using ffmpeg</button>
+	<button id="btn_cstop" onclick="" disabled=true>Stop</button>
+	Output:
+	<select id="enc_output" onchange="proc_ffmpeg()" style="width:110px" title="Output file type (Initial Value: mp4)">
+		<option value="mp4">mp4
+		<option value="m4a">m4a (audio)
+		<option value="aac">aac (audio)
+		<option value="jpg">jpg
+		<option value="png">png
+	</select>
+	<input type='hidden' id="enc_fps" style="width:70px" value="29.97" onchange="proc_ffmpeg()" title="Video frame rate (Initial Value: 29.97)" />
+	<select id="enc_samplerate" onchange="proc_ffmpeg()" style="width:10em" title="Audio sample rate (Initial Value: None)">
+		<option value="">*Sample Rate (Audio)
+		<option value="192k">192k
+		<option value="128k">128k
+		<option value="96k">96k
+	</select>
+</div>
+<div style="align:center; width:75%">
+	<div id="msg4" style="color:green;font-size:15px;margin-bottom:1px"></div>
+	<div id="log1" style="overflow-y:scroll;width:850px;height:310px;display:none;"></div>
+	<div style="align:center">
+		Supported preview formats in a browser: mp4, m4v, webm, ogv, mp3, ogg, wav, m4a, Partially(mkv/H264, mov/MPEG4, opus, flac)
+	</div>
+</div>
+<form method="post" action="/editor/ffmpeg_render/convert" name="ignore">
+	{% csrf_token%}
+</form>
+
+<script type="text/javascript" src="{% static 'editor/js/converter.js' %}"></script>
+<script type="text/javascript" src="{% static 'editor/js/slider_helper.js' %}"></script>
+<script type="text/javascript">
+	function trigger_convert(){
+		if (document.getElementsByName('video_path')[0].value == ''){
+			alert('The path to the video file must be set must be set');
+		} else {
+			conversionCommand = document.getElementById('ffmpeg2').value
+			console.log(conversionCommand);
+			let logDisplay = document.getElementById('log1');
+			logDisplay.style.display = 'block';
+			let newMessage = document.createElement('div');
+			newMessage.innerHTML = 'Starting Process';
+			logDisplay.appendChild(newMessage);
+
+			start_conversion(conversionCommand);
+		}
+	}
+
+	function start_conversion(conversionCommand){
+		let xhr = new XMLHttpRequest();
+		let jsonObj = { "conversion": conversionCommand.replaceAll('"',"'") };
+		console.log(jsonObj);
+
+		let csrfToken = document.getElementsByName('csrfmiddlewaretoken')[0].value;
+		xhr.open('POST', '/editor/ffmpeg_render/convert/', false);
+		xhr.setRequestHeader('X-CSRFToken', csrfToken);
+		xhr.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+		xhr.send(JSON.stringify(jsonObj));
+
+		xhr.addEventListener("readystatechange", processRequest, false);
+
+		/*xhr.onreadystatechange = processRequest;*/
+	}
+
+	function processRequest(e) {
+		console.log(e.readyState);
+		console.log(e.responseText);
+		/** TODO: Get results to appear **/
+
+
+		let logDisplay = document.getElementById('log1');
+		logDisplay.style.display = 'block';
+		let newMessage = document.createElement('div');
+		newMessage.innerHTML = e.readyState;
+		logDisplay.appendChild(newMessage);
+
+		newMessage = document.createElement('div');
+		newMessage.innerHTML = e.responseText;
+		logDisplay.appendChild(newMessage);
+	}
+
+	function _getfrmdoc(ifrm){
+		return (ifrm.contentWindow) ? ifrm.contentWindow : (ifrm.contentDocument.document) ? ifrm.contentDocument.document : ifrm.contentDocument;
+	}
+	var saverinited,gfids,gfidsName;
+	function proc_saver(filename, bloburl, mimeType){
+		function resize(){
+			var a=_getid('savediv');
+			if(a && a.style.display==''){
+				//var x=getScrollLeft()+((getWindowWidth()-a.clientWidth) / 2);
+				var x=_getid('maintable').offsetLeft+((_getid('maintable').offsetWidth-a.clientWidth) / 2);
+				var y=getScrollTop()+((getWindowHeight()-a.clientHeight) / 2);
+				if(x<0)x=0;if(y<0)y=0;
+				a.style.left=x+"px";
+				a.style.top=y+"px";
+			}
+		}
+		if(!saverinited){
+			saverinited=true;
+			if (window.addEventListener){
+				window.addEventListener("resize", resize, false);
+			}else if (window.attachEvent){
+				window.attachEvent("onresize", resize);
+			}
+		}
+
+		var arr=[];
+		arr.push({'filename':filename, 'bloburl':bloburl, 'mimeType':mimeType});
+
+		var obj=_getid('saver');
+		if(!obj){
+			_getid('savediv').innerHTML='<iframe id="saver" style="border:1px solid black;" src="" frameborder=0 marginwidth=0 marginheight=0 leftmargin=0 topmargin=0 scrolling="no"></iframe>';
+			obj=_getid('saver');
+		}
+		var ifrm=_getfrmdoc(obj);
+		if(ifrm){
+			var w=800;
+			var h=530;
+			if(ifrm.proc_additem){
+				_getid('savediv').style.display='';resize();
+				ifrm.proc_additem(arr,true,gd_userId,gfids,gfidsName);
+			}else{
+				obj.style.width=w+'px';
+				obj.style.height=h+'px';
+				_getid('savediv').style.display='';resize();
+				ifrm.location.replace('save_to_drive.php?twidth='+w+'&theight='+h);
+				var timer=setInterval(function(){
+					if(ifrm.proc_additem){
+						clearInterval(timer);
+						ifrm.proc_additem(arr,true,gd_userId,gfids,gfidsName);
+					}
+				},300);
+			}
+		}
+	}
+	function proc_saver_close(){
+		_getid('savediv').style.display='none';
+	}
+
+	function proc_gview(burl){
+		if(!burl)return;
+		var a=_getid("gviewer");
+		a.style.display='';
+		var ifrm2 = _getfrmdoc(a);
+		ifrm2.location.replace(burl);
+		//document.body.style.overflow='hidden';
+		gd_btn_login2();
+	}
+	function proc_rssclose(){
+		var a=_getid("gviewer");
+		if(a && a.style.display==''){
+			a.style.display="none";
+			_getid("btn_gvclose").style.display="none";
+			//document.body.style.overflow='';
+			try{
+				var ifrm2 = _getfrmdoc(a);
+				if(ifrm2) ifrm2.location.replace('about:blank');
+			}catch(err){}
+		}
+	}
+</script>
+
+<div id="savediv" style="position:absolute;z-index:10000000;display:none;"></div>
+<style>.shadow{border:0px solid silver;-webkit-box-shadow: 0 0 10px #999;	-moz-box-shadow: 0 0 10px #999; box-shadow: 0 0 10px #999;}</style>
+<button type="button" id="btn_gvclose" style="z-index:10000010;position:absolute;font-size:20px;padding:4px 25px;display:none;white-space:nowrap"><img src="//iblogbox.github.io/js/img/etc/close.png" width=14 align="absmiddle"> Close</button>
+<iframe id="gviewer" src="" style="z-index:10000011;position:absolute;display:none;background-color:white" class="shadow" frameborder=0 allowfullscreen="true">
+
+</iframe>
+
+<style>
+a.bottomlink:link{text-decoration:underline;}
+a.bottomlink:visited{text-decoration:underline;}
+a.bottomlink:active{text-decoration:underline;}
+a.bottomlink:hover{text-decoration:underline;}
+</style>
+
+<br>
+</body>
+</html>
