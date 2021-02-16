@@ -7,8 +7,8 @@ python manage.py runserver
 #Requires
 Microsoft Visual C++ 14.0 (https://visualstudio.microsoft.com/visual-cpp-build-tools/)
 
-pycrypto
+Install other requirements using the requirements.txt file
 
-py7zr
-
-requests
+```
+python -m pip install -r requirements.txt
+```
