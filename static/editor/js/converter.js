@@ -17,7 +17,8 @@ function proc_ffmpeg(dtype){
 	//g_lastdata2.blob.name.replace(/\"/g,'\\"')
 	var s = 'ffmpeg.exe -ss '+ts+' -i "' + video_path + g_lastdata2.blob.name + '" -movflags faststart -t ' + (te-ts).toFixed(4) + ' ';
 	var d = new Date()
-	datets = d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate() + '-' + d.getHours() + d.getMinutes() + d.getSeconds();
+	month = d.getMonth()+1
+	datets = d.getFullYear() + '-' + month + '-' + d.getDate() + '-' + d.getHours() + '-' + d.getMinutes() + '-' + d.getSeconds();
 	if(output=='m4a' || output=='aac' || output=='ogg' || output=='wma'){
 		if(samplerate) s+='-b:a '+samplerate+' ';
 		s+='-vn "' + video_path + datets + '.' + output + '"';
